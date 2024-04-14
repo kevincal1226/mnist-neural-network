@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import sklearn
 import sklearn.model_selection
+import json
 
 def sigmoid(x: int) -> float:
   """Sigmoid activation function."""
@@ -172,7 +173,8 @@ def main():
     inputs = np.array(df.iloc[:, 1:])
     np.divide(inputs, 256.0)
     labels = np.array(df.iloc[:, 0])  
-    nn = MLP([784, 700, 500, 300, 10])
+    # nn = MLP([784, 700, 500, 300, 10])
+    nn = MLP([784, 32, 32, 10])
     X = np.array(inputs)
     X = X / 256.0
     Y = np.array(labels)
@@ -185,8 +187,18 @@ def main():
     nn.sgd_train(X_train, y_train, epochs=100, batch_size=2056, lr=0.15)
 
     # actually testing the data
-    # print(nn.forward(X_test[10].reshape((784,)))[0])
-    print(nn.evaluate(X_test, y_test))
+    print(nn.sizes)
+    print(nn.num_layers)
+    print(f"Accuracy: {round(nn.evaluate(X_test, y_test) * 100, 2)}")
+    with open("weights.txt", "w+") as f:
+        f.write(f"Weights\n{len(nn.weights)}\n{nn.weights[0].shape}\n")
+        for elem in nn.weights:
+            np.savetxt(f, elem, delimiter=" ")
+    with open("biases.txt", "w+") as f:
+        f.write(f"Biases\n{len(nn.biases)}\n{nn.biases[0].shape}\n")
+        for elem in nn.biases:
+           np.savetxt(f, elem, delimiter=" ")
+
 
 if __name__ == '__main__':
     main()
