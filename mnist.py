@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import sklearn
 import sklearn.model_selection
-import json
 
 def sigmoid(x: int) -> float:
   """Sigmoid activation function."""
