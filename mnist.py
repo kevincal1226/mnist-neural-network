@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import sklearn
 import sklearn.model_selection
+import pathlib
 
 def sigmoid(x: int) -> float:
   """Sigmoid activation function."""
@@ -23,27 +24,36 @@ def sigmoid_back(x: int) -> float:
 
 class MLP:
   """A Neural Network Class to Perform Basic Feedforward algorithm and training"""
-  def __init__(self, sizes: list):
+  def __init__(self, sizes: list, weight_path: str, bias_path: str, load_existing: bool):
     """Initialize a numpy array or a list of weights an array or list of weights depending on sizes"""
     self.sizes = sizes
     self.num_layers = len(sizes)
     self.weights = []
     self.biases = []
 
+    cwd = pathlib.Path.cwd()
+    self.wpath = cwd/weight_path or ""
+    self.bpath = cwd/bias_path or ""
+    self.load_existing = load_existing or False
     self.__init_params()
     return
 
   def __init_params(self):
     """Initialize random weights and biases based on size parameters."""
-    for i in range(1, self.num_layers):
-        # X inputs -> Y Ouputs
-        in_size = self.sizes[i-1]
-        out_size = self.sizes[i]
+    if self.wpath.exists() and self.bpath.exists() and self.load_existing:
+       print("Loading existing model...")
+       self.weights = np.load(self.wpath, allow_pickle=True).T
+       self.biases = np.load(self.bpath, allow_pickle=True).T
+    else:
+        for i in range(1, self.num_layers):
+            # X inputs -> Y Ouputs
+            in_size = self.sizes[i-1]
+            out_size = self.sizes[i]
 
-        # weights.shape = (Y, X), biases.shape = (Y, 1)
-        # e.g. 2 -> 3: weights is (2, 3), biases is (1, 3)
-        self.weights.append(np.random.randn(out_size, in_size) * 0.1)
-        self.biases.append(np.random.randn(out_size, 1) * 0.1)
+            # weights.shape = (Y, X), biases.shape = (Y, 1)
+            # e.g. 2 -> 3: weights is (2, 3), biases is (1, 3)
+            self.weights.append(np.random.randn(out_size, in_size) * 0.1)
+            self.biases.append(np.random.randn(out_size, 1) * 0.1)
 
   def forward(self, x: np.ndarray):
     """
@@ -173,7 +183,7 @@ def main():
     np.divide(inputs, 256.0)
     labels = np.array(df.iloc[:, 0])  
     # nn = MLP([784, 700, 500, 300, 10])
-    nn = MLP([784, 32, 32, 10])
+    nn = MLP([784, 32, 32, 10], "weights.npy", "biases.npy", True)
     X = np.array(inputs)
     X = X / 256.0
     Y = np.array(labels)
@@ -189,14 +199,14 @@ def main():
     print(nn.sizes)
     print(nn.num_layers)
     print(f"Accuracy: {round(nn.evaluate(X_test, y_test) * 100, 2)}")
-    with open("weights.txt", "w+") as f:
-        f.write(f"Weights\n{len(nn.weights)}\n{nn.weights[0].shape}\n")
-        for elem in nn.weights:
-            np.savetxt(f, elem, delimiter=" ")
-    with open("biases.txt", "w+") as f:
-        f.write(f"Biases\n{len(nn.biases)}\n{nn.biases[0].shape}\n")
-        for elem in nn.biases:
-           np.savetxt(f, elem, delimiter=" ")
+    # with open("weights.npy", "wb") as f:
+    #     for elem in nn.weights:
+    #         np.save(f, elem)
+    # with open("biases.npy", "wb") as f:
+    #     for elem in nn.biases:
+    #        np.save(f, elem)
+    np.save(nn.wpath, np.array(nn.weights, dtype=object))
+    np.save(nn.bpath, np.array(nn.biases, dtype=object))
 
 
 if __name__ == '__main__':
